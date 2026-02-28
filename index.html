@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raccoon Muncher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000510;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px 30px;
+            background: #000;
+            border: 4px solid #2121de;
+            border-radius: 10px;
+            box-shadow: 0 0 50px rgba(33, 33, 222, 0.5);
+        }
+
+        .title-icon {
+            font-size: 4.5rem;
+        }
+
+        h1 {
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255,215,0,0.5);
+            font-size: 2rem;
+            text-align: left;
+            margin: 0;
+        }
+
+        .game-container {
+            background: #000;
+            border: 4px solid #2121de;
+            border-radius: 10px;
+            box-shadow: 0 0 50px rgba(33, 33, 222, 0.5);
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #0a0a0a;
+        }
+
+        .game-info {
+            display: flex;
+            gap: 40px;
+            margin-top: 20px;
+            color: #fff;
+            font-size: 1.2rem;
+        }
+
+        .score, .lives {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .label {
+            color: #888;
+        }
+
+        .value {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 1.4rem;
+        }
+
+        .controls {
+            margin-top: 15px;
+            color: #888;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 30px 50px;
+            border-radius: 15px;
+            border: 3px solid #ffd700;
+            text-align: center;
+            display: none;
+        }
+
+        .game-over h2 {
+            color: #ff6b6b;
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .game-over h2.winner {
+            color: #ffd700;
+            font-size: 2.5rem;
+            text-shadow: 0 0 20px #ffd700;
+            animation: winnerPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes winnerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .flash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .flash-overlay.active {
+            animation: flash 0.5s ease-out;
+        }
+
+        @keyframes flash {
+            0% { opacity: 0.8; }
+            100% { opacity: 0; }
+        }
+
+        .game-over p {
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .game-over button {
+            background: #ffd700;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .game-over button:hover {
+            transform: scale(1.1);
+        }
+
+        .game-wrapper {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .score-panel {
+            background: #000;
+            border: 4px solid #2121de;
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 180px;
+            box-shadow: 0 0 30px rgba(33, 33, 222, 0.3);
+        }
+
+        .score-panel h3 {
+            color: #fff;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+        }
+
+        .enemy-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 8px;
+            border-radius: 5px;
+        }
+
+        .enemy-icon {
+            font-size: 24px;
+            width: 30px;
+            text-align: center;
+        }
+
+        .enemy-info {
+            flex: 1;
+        }
+
+        .enemy-name {
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .enemy-points {
+            color: #ffcc00;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="title-wrapper">
+        <div class="title-icon">🦝</div>
+        <h1>Urban Raccoon<br>Habitat Game</h1>
+    </div>
+    <div class="game-wrapper">
+        <div class="game-container">
+            <canvas id="gameCanvas" width="840" height="720"></canvas>
+        </div>
+        <div class="score-panel">
+            <h3>Enemy Points</h3>
+            <div class="enemy-row">
+                <div class="enemy-icon">🐺</div>
+                <div class="enemy-info">
+                    <div class="enemy-name">Old Coyote</div>
+                    <div class="enemy-points">500 pts</div>
+                </div>
+            </div>
+            <div class="enemy-row">
+                <div class="enemy-icon">🐺</div>
+                <div class="enemy-info">
+                    <div class="enemy-name">Coyote</div>
+                    <div class="enemy-points">200 pts</div>
+                </div>
+            </div>
+            <div class="enemy-row">
+                <div class="enemy-icon">🐺</div>
+                <div class="enemy-info">
+                    <div class="enemy-name">Girl Coyote</div>
+                    <div class="enemy-points">100 pts</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="game-info">
+        <div class="score">
+            <span class="label">SCORE:</span>
+            <span class="value" id="scoreValue">0</span>
+        </div>
+        <div class="lives">
+            <span class="label">LIVES:</span>
+            <span class="value" id="livesValue">3</span>
+        </div>
+    </div>
+    <div class="controls">Use ARROW KEYS or WASD to move • Collect all 🗑️ to win!</div>
+
+    <div class="flash-overlay" id="flashOverlay"></div>
+    <div class="game-over" id="gameOver">
+        <h2 id="gameOverTitle">GAME OVER</h2>
+        <p id="gameOverMessage">Final Score: <span id="finalScore">0</span></p>
+        <button onclick="restartGame()">Play Again</button>
+    </div>
+
+    <script>
+        // Audio setup
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let lastDotSound = 0;
+        let dotSoundToggle = false;
+        
+        function playDotSound() {
+            const now = Date.now();
+            if (now - lastDotSound < 100) return; // Don't play too frequently
+            lastDotSound = now;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            // Alternate between two tones for "waka waka" effect
+            osc.frequency.value = dotSoundToggle ? 800 : 600;
+            dotSoundToggle = !dotSoundToggle;
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+        
+        function playPowerPelletSound() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.2);
+            
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+        
+        function playDeathSound() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            // Descending tone for death
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 1);
+            
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 1);
+        }
+        
+        function playGameOverSound() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            // Sad descending tones
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(350, audioCtx.currentTime + 0.2);
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime + 0.4);
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime + 0.6);
+            
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 1);
+        }
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const cellSize = 30;
+        const cols = 28;
+        const rows = 24;
+
+        // Game state
+        let score = 0;
+        let lives = 3;
+        let cansCollected = 0;
+        let level = 1;
+        let gameRunning = true;
+        let powerMode = false;
+        let powerTimer = null;
+
+        // Original Maze Layout - 1=wall, 2=dot, 3=power pellet, 4=ghost house, 0=empty
+        const maze = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+            [1,3,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,3,1],
+            [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
+            [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
+            [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+            [1,1,1,1,1,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,1,1,1,1,1],
+            [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
+            [0,0,0,0,0,1,2,1,1,0,1,1,1,4,4,1,1,1,0,1,1,2,1,0,0,0,0,0],
+            [1,1,1,1,1,1,2,1,1,0,1,4,4,4,4,4,4,1,0,1,1,2,1,1,1,1,1,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+            [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+            [1,3,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,3,1],
+            [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
+            [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
+            [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+            [1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1],
+            [1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        // Initialize dots
+        let dots = [];
+        let powerPellets = [];
+        function initDots() {
+            dots = [];
+            powerPellets = [];
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    if (maze[y][x] === 2) {
+                        dots.push({x: x * cellSize + cellSize/2, y: y * cellSize + cellSize/2, collected: false});
+                    } else if (maze[y][x] === 3) {
+                        powerPellets.push({x: x * cellSize + cellSize/2, y: y * cellSize + cellSize/2, collected: false});
+                    }
+                }
+            }
+        }
+
+        // Raccoon player - start position (lower area of 24-row maze)
+        const raccoon = {
+            x: cellSize * 9.5,
+            y: cellSize * 17.5,
+            size: 12,
+            baseSize: 12,
+            powerSize: 18,
+            speed: 8.0,
+            dx: 0,
+            dy: 0,
+            direction: 'left',
+            dying: false,
+            deathScale: 1,
+            deathRotation: 0
+        };
+
+        // Ghosts - start outside the ghost house box
+        const ghosts = [
+            {x: cellSize * 14.5, y: cellSize * 10.5, color: '#ffb8ae', dx: 0, dy: 0, scared: false, originalColor: '#ffb8ae', size: 13, type: 'girl-coyote'},
+            {x: cellSize * 26.5, y: cellSize * 1.5, color: '#00ffff', dx: 0, dy: 0, scared: false, originalColor: '#00ffff', size: 13, type: 'old-coyote'},
+            {x: cellSize * 2.5, y: cellSize * 1.5, color: '#ffb852', dx: 0, dy: 0, scared: false, originalColor: '#ffb852', size: 13, type: 'coyote'},
+        ];
+
+        // Input handling
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            
+            // Prevent default for arrow keys
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+        document.addEventListener('keyup', (e) => keys[e.key] = false);
+
+        function handleInput() {
+            if (keys['ArrowUp'] || keys['w'] || keys['W']) {
+                raccoon.dx = 0;
+                raccoon.dy = -raccoon.speed;
+                raccoon.direction = 'up';
+            } else if (keys['ArrowDown'] || keys['s'] || keys['S']) {
+                raccoon.dx = 0;
+                raccoon.dy = raccoon.speed;
+                raccoon.direction = 'down';
+            } else if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+                raccoon.dx = -raccoon.speed;
+                raccoon.dy = 0;
+                raccoon.direction = 'left';
+            } else if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+                raccoon.dx = raccoon.speed;
+                raccoon.dy = 0;
+                raccoon.direction = 'right';
+            }
+        }
+
+        function checkWallCollision(x, y, size, isGhost = false) {
+            const corners = [
+                {x: x - size, y: y - size},
+                {x: x + size, y: y - size},
+                {x: x - size, y: y + size},
+                {x: x + size, y: y + size}
+            ];
+
+            for (let corner of corners) {
+                const col = Math.floor(corner.x / cellSize);
+                const row = Math.floor(corner.y / cellSize);
+                if (row >= 0 && row < rows && col >= 0 && col < cols) {
+                    // Ghosts can pass through ghost house (4), only walls (1) block everyone
+                    if (maze[row][col] === 1) return true;
+                    // Only raccoon is blocked by ghost house
+                    if (!isGhost && maze[row][col] === 4) return true;
+                }
+            }
+            return false;
+        }
+
+        function moveRaccoon() {
+            // Calculate new position
+            const newX = raccoon.x + raccoon.dx;
+            const newY = raccoon.y + raccoon.dy;
+            
+            // Check center point collision for more precise movement
+            const centerCol = Math.floor(raccoon.x / cellSize);
+            const centerRow = Math.floor(raccoon.y / cellSize);
+            
+            // Try to move in X direction with smaller collision radius
+            if (raccoon.dx !== 0) {
+                const testX = raccoon.x + raccoon.dx;
+                // Use just the center point for cleaner movement
+                const testCol = Math.floor(testX / cellSize);
+                const testRow = Math.floor(raccoon.y / cellSize);
+                
+                // Check bounds and wall collision at center
+                if (testRow >= 0 && testRow < rows && testCol >= 0 && testCol < cols) {
+                    const cell = maze[testRow][testCol];
+                    if (cell !== 1 && cell !== 4) { // Not a wall or ghost house
+                        raccoon.x = testX;
+                    } else {
+                        // Hit wall - try to slide to edge of current cell
+                        if (raccoon.dx > 0) {
+                            raccoon.x = (centerCol + 0.5) * cellSize - 1; // Left edge of wall
+                        } else {
+                            raccoon.x = (centerCol + 0.5) * cellSize + 1; // Right edge of wall
+                        }
+                        raccoon.dx = 0;
+                    }
+                }
+            }
+            
+            // Try to move in Y direction with smaller collision radius
+            if (raccoon.dy !== 0) {
+                const testY = raccoon.y + raccoon.dy;
+                // Use just the center point for cleaner movement
+                const testCol = Math.floor(raccoon.x / cellSize);
+                const testRow = Math.floor(testY / cellSize);
+                
+                // Check bounds and wall collision at center
+                if (testRow >= 0 && testRow < rows && testCol >= 0 && testCol < cols) {
+                    const cell = maze[testRow][testCol];
+                    if (cell !== 1 && cell !== 4) { // Not a wall or ghost house
+                        raccoon.y = testY;
+                    } else {
+                        // Hit wall - try to slide to edge of current cell
+                        if (raccoon.dy > 0) {
+                            raccoon.y = (centerRow + 0.5) * cellSize - 1; // Top edge of wall
+                        } else {
+                            raccoon.y = (centerRow + 0.5) * cellSize + 1; // Bottom edge of wall
+                        }
+                        raccoon.dy = 0;
+                    }
+                }
+            }
+
+            // Screen wrap - only horizontally, not vertically
+            if (raccoon.x < 0) raccoon.x = canvas.width;
+            if (raccoon.x > canvas.width) raccoon.x = 0;
+            
+            // Keep raccoon within vertical bounds
+            if (raccoon.y < cellSize) raccoon.y = cellSize;
+            if (raccoon.y > canvas.height - cellSize) raccoon.y = canvas.height - cellSize;
+        }
+
+        function moveGhosts() {
+            ghosts.forEach(ghost => {
+                if (ghost.scared) {
+                    // Run away from raccoon when scared
+                    const dx = ghost.x - raccoon.x;
+                    const dy = ghost.y - raccoon.y;
+                    const dist = Math.hypot(dx, dy);
+                    
+                    if (dist > 0) {
+                        ghost.dx = (dx / dist) * 1.5;
+                        ghost.dy = (dy / dist) * 1.5;
+                    }
+                } else {
+                    // Chase raccoon from different angles - surround strategy
+                    const dx = raccoon.x - ghost.x;
+                    const dy = raccoon.y - ghost.y;
+                    const dist = Math.hypot(dx, dy);
+                    
+                    if (dist > 0) {
+                        // Each ghost uses different strategy
+                        let targetX = raccoon.x;
+                        let targetY = raccoon.y;
+                        
+                        if (ghost.type === 'coyote') {
+                            // Coyote predicts where raccoon is going (intercept)
+                            targetX = raccoon.x + (raccoon.dx * 50);
+                            targetY = raccoon.y + (raccoon.dy * 50);
+                        } else if (ghost.type === 'girl-coyote') {
+                            // Girl coyote tries to cut off from the left side
+                            targetX = raccoon.x - 80;
+                            targetY = raccoon.y;
+                        } else if (ghost.type === 'old-coyote') {
+                            // Old coyote tries to cut off from the right side
+                            targetX = raccoon.x + 80;
+                            targetY = raccoon.y;
+                        }
+                        
+                        // Calculate direction to target position
+                        const targetDx = targetX - ghost.x;
+                        const targetDy = targetY - ghost.y;
+                        const targetDist = Math.hypot(targetDx, targetDy);
+                        
+                        if (targetDist > 0) {
+                            let speed;
+                            if (ghost.type === 'coyote') speed = 3.2;
+                            else if (ghost.type === 'girl-coyote') speed = 3.0;
+                            else speed = 3.5; // old-coyote - fastest to chase raccoon
+                            
+                            ghost.dx = (targetDx / targetDist) * speed;
+                            ghost.dy = (targetDy / targetDist) * speed;
+                        }
+                    }
+                }
+
+                const newX = ghost.x + ghost.dx;
+                const newY = ghost.y + ghost.dy;
+
+                // Check collision and try to navigate around walls - improved
+                let movedX = false;
+                let movedY = false;
+                
+                // Try moving in X direction first
+                if (!checkWallCollision(newX, ghost.y, ghost.size, true)) {
+                    ghost.x = newX;
+                    movedX = true;
+                }
+                
+                // Then try Y direction
+                if (!checkWallCollision(ghost.x, newY, ghost.size, true)) {
+                    ghost.y = newY;
+                    movedY = true;
+                }
+                
+                // If stuck, try both directions separately
+                if (!movedX && !movedY) {
+                    // Try to slide along wall by reversing X and trying Y
+                    if (!checkWallCollision(ghost.x - ghost.dx, ghost.y, ghost.size, true)) {
+                        ghost.x -= ghost.dx;
+                        ghost.dx = -ghost.dx;
+                    }
+                    if (!checkWallCollision(ghost.x, ghost.y - ghost.dy, ghost.size, true)) {
+                        ghost.y -= ghost.dy;
+                        ghost.dy = -ghost.dy;
+                    }
+                }
+
+                // Screen wrap
+                if (ghost.x < 0) ghost.x = canvas.width;
+                if (ghost.x > canvas.width) ghost.x = 0;
+            });
+        }
+
+        function checkDotCollection() {
+            // Regular dots (trash cans)
+            dots.forEach(dot => {
+                if (!dot.collected) {
+                    const dist = Math.hypot(raccoon.x - dot.x, raccoon.y - dot.y);
+                    if (dist < raccoon.size + 5) {
+                        dot.collected = true;
+                        score += 10;
+                        cansCollected++;
+                        // Extra life every 60 cans
+                        if (cansCollected % 60 === 0) {
+                            lives++;
+                            document.getElementById('livesValue').textContent = lives;
+                        }
+                        document.getElementById('scoreValue').textContent = score;
+                        playDotSound();
+                    }
+                }
+            });
+
+            // Power pellets - with proper collection radius
+            powerPellets.forEach((pellet, index) => {
+                if (!pellet.collected) {
+                    const dist = Math.hypot(raccoon.x - pellet.x, raccoon.y - pellet.y);
+                    // Extra large collection radius to ensure pellets can be eaten
+                    if (dist < raccoon.size + 30) {
+                        console.log('Eating power pellet', index, 'at', pellet.x, pellet.y, 'dist:', dist);
+                        pellet.collected = true;
+                        score += 50;
+                        document.getElementById('scoreValue').textContent = score;
+                        playPowerPelletSound();
+                        activatePowerMode();
+                    }
+                }
+            });
+        }
+
+        function activatePowerMode() {
+            powerMode = true;
+            // Make raccoon bigger
+            raccoon.size = raccoon.powerSize;
+            ghosts.forEach(ghost => {
+                ghost.scared = true;
+                ghost.color = '#4169e1';
+            });
+
+            if (powerTimer) clearTimeout(powerTimer);
+            powerTimer = setTimeout(() => {
+                powerMode = false;
+                // Reset raccoon size
+                raccoon.size = raccoon.baseSize;
+                ghosts.forEach(ghost => {
+                    ghost.scared = false;
+                    ghost.color = ghost.originalColor;
+                });
+            }, 10000);
+        }
+
+        function checkGhostCollision() {
+            ghosts.forEach(ghost => {
+                const dist = Math.hypot(raccoon.x - ghost.x, raccoon.y - ghost.y);
+                if (dist < raccoon.size + ghost.size - 5) {
+                    if (ghost.scared) {
+                        // Eat the ghost - respawn outside ghost house
+                        ghost.x = cellSize * 13.5;
+                        ghost.y = cellSize * 11.5; // Outside the ghost house box
+                        ghost.scared = false;
+                        ghost.color = ghost.originalColor;
+                        score += 200;
+                        document.getElementById('scoreValue').textContent = score;
+                    } else {
+                        // Lose a life - start death animation
+                        if (!raccoon.dying) {
+                            raccoon.dying = true;
+                            raccoon.dx = 0;
+                            raccoon.dy = 0;
+                            playDeathSound();
+                            setTimeout(() => {
+                                lives--;
+                                document.getElementById('livesValue').textContent = lives;
+                                if (lives <= 0) {
+                                    gameOver(false);
+                                } else {
+                                    resetPositions();
+                                }
+                            }, 1000); // 1 second death animation
+                        }
+                    }
+                }
+            });
+        }
+
+        function resetPositions() {
+            raccoon.x = cellSize * 9.5;
+            raccoon.y = cellSize * 17.5;
+            raccoon.dx = 0;
+            raccoon.dy = 0;
+            raccoon.direction = 'left';
+            raccoon.dying = false;
+            raccoon.deathScale = 1;
+            raccoon.deathRotation = 0;
+
+            // Keep ghosts outside the ghost house box at all times
+            ghosts[0].x = cellSize * 14.5; ghosts[0].y = cellSize * 10.5; // girl coyote in middle tunnel
+            ghosts[1].x = cellSize * 26.5; ghosts[1].y = cellSize * 1.5; // old coyote in top right
+            ghosts[2].x = cellSize * 2.5; ghosts[2].y = cellSize * 1.5; // coyote in open path near chicken
+        }
+
+        function checkWin() {
+            const allCollected = dots.every(d => d.collected) && powerPellets.every(p => p.collected);
+            if (allCollected && gameRunning) {
+                gameOver(true);
+            }
+        }
+
+        function nextLevel() {
+            level++;
+            gameRunning = true;
+            powerMode = false;
+            cansCollected = 0;
+            
+            document.getElementById('gameOver').style.display = 'none';
+            
+            initDots();
+            resetPositions();
+            ghosts.forEach(ghost => {
+                ghost.scared = false;
+                ghost.color = ghost.originalColor;
+            });
+        }
+
+        function gameOver(won) {
+            gameRunning = false;
+            if (!won) playGameOverSound();
+            const title = document.getElementById('gameOverTitle');
+            const message = document.getElementById('gameOverMessage');
+            const button = document.querySelector('.game-over button');
+            
+            if (won) {
+                title.textContent = 'CONGRATULATIONS!';
+                title.className = 'winner';
+                title.style.color = '#ffd700';
+                message.innerHTML = 'Level ' + level + ' Complete! Final Score: <span id="finalScore">' + score + '</span>';
+                button.textContent = 'Next Level';
+                button.onclick = nextLevel;
+                // Trigger flash effect
+                const flash = document.getElementById('flashOverlay');
+                flash.classList.add('active');
+                setTimeout(() => flash.classList.remove('active'), 500);
+            } else {
+                title.textContent = 'GAME OVER';
+                title.className = '';
+                title.style.color = '#ff6b6b';
+                message.innerHTML = 'Better luck next time! Final Score: <span id="finalScore">' + score + '</span>';
+                button.textContent = 'Play Again';
+                button.onclick = restartGame;
+            }
+            
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        function restartGame() {
+            score = 0;
+            lives = 3;
+            cansCollected = 0;
+            level = 1;
+            gameRunning = true;
+            powerMode = false;
+            
+            document.getElementById('scoreValue').textContent = score;
+            document.getElementById('livesValue').textContent = lives;
+            document.getElementById('gameOver').style.display = 'none';
+            
+            initDots();
+            resetPositions();
+            ghosts.forEach(ghost => {
+                ghost.scared = false;
+                ghost.color = ghost.originalColor;
+            });
+            
+            gameLoop();
+        }
+
+        // Drawing functions
+        function drawMaze() {
+            // Set glow effect for walls - color changes based on level
+            ctx.shadowBlur = 20;
+            // Green for level 2+, blue for level 1
+            const wallColor = level >= 2 ? '#00aa00' : '#2121de';
+            const glowColor = level >= 2 ? '#00ff00' : '#4444ff';
+            ctx.shadowColor = glowColor;
+            
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    const cell = maze[y][x];
+                    const px = x * cellSize;
+                    const py = y * cellSize;
+                    
+                    if (cell === 1) {
+                        // Wall color changes based on level
+                        ctx.fillStyle = wallColor;
+                        ctx.fillRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
+                    } else if (cell === 4) {
+                        // Ghost house door - pink
+                        ctx.fillStyle = '#ffb8ae';
+                        ctx.fillRect(px, py + 10, cellSize, 10);
+                    }
+                }
+            }
+            
+            // Reset shadow
+            ctx.shadowBlur = 0;
+        }
+
+        function drawDots() {
+            // Stronger glow effect for dots
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#fff';
+            
+            // Draw dots as trash can emojis
+            dots.forEach(dot => {
+                if (!dot.collected) {
+                    ctx.font = '16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('🗑️', dot.x, dot.y);
+                }
+            });
+
+            // Draw power pellets as emojis based on position
+            powerPellets.forEach(pellet => {
+                if (!pellet.collected) {
+                    // Determine which emoji based on position
+                    const col = Math.floor(pellet.x / cellSize);
+                    const row = Math.floor(pellet.y / cellSize);
+                    
+                    let emoji = '⚪'; // default
+                    if (row <= 5 && col <= 5) {
+                        emoji = '🍗'; // upper left - chicken drumstick
+                    } else if (row <= 5 && col >= 22) {
+                        emoji = '🍕'; // upper right - pizza
+                    } else if (row === 16 && col === 1) {
+                        emoji = '🍎'; // lower left - apple
+                    } else if (row === 16 && col === 26) {
+                        emoji = '🐁'; // lower right - mouse
+                    }
+                    
+                    ctx.font = '20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    // Pulsing animation for power pellets
+                    ctx.save();
+                    ctx.translate(pellet.x, pellet.y);
+                    const pulseScale = 1 + Math.sin(Date.now() / 200) * 0.15;
+                    ctx.scale(pulseScale, pulseScale);
+                    // Make mouse brown with stronger filter
+                    if (emoji === '🐁') {
+                        ctx.filter = 'sepia(1) saturate(3) hue-rotate(-40deg) brightness(0.6) contrast(1.2)';
+                    }
+                    ctx.fillText(emoji, 0, 0);
+                    ctx.filter = 'none';
+                    ctx.restore();
+                }
+            });
+            
+            // Reset shadow
+            ctx.shadowBlur = 0;
+        }
+
+        function drawRaccoon() {
+            if (raccoon.dying) {
+                // Melting death animation like Pac-Man
+                ctx.save();
+                ctx.translate(raccoon.x, raccoon.y);
+                
+                // Spin and shrink
+                raccoon.deathRotation += 0.3;
+                raccoon.deathScale -= 0.02;
+                if (raccoon.deathScale < 0) raccoon.deathScale = 0;
+                
+                ctx.rotate(raccoon.deathRotation);
+                ctx.scale(raccoon.deathScale, raccoon.deathScale);
+                
+                // Draw melting raccoon
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.globalAlpha = raccoon.deathScale;
+                ctx.fillText('🦝', 0, 0);
+                ctx.globalAlpha = 1;
+                
+                ctx.restore();
+                return;
+            }
+            
+            ctx.save();
+            ctx.translate(raccoon.x, raccoon.y);
+            
+            // Raccoon always faces forward - no rotation
+            
+            // Add munching effect by pulsing the raccoon
+            const munchScale = 1 + Math.sin(Date.now() / 100) * 0.1;
+            ctx.scale(munchScale, munchScale);
+            
+            // Draw raccoon emoji - size changes based on power mode
+            const fontSize = powerMode ? 36 : 24;
+            ctx.font = fontSize + 'px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🦝', 0, 0);
+
+            ctx.restore();
+        }
+
+        function drawGhosts() {
+            ghosts.forEach(ghost => {
+                if (ghost.type === 'girl-coyote') {
+                    // Draw girl coyote emoji with bow
+                    ctx.font = '22px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    if (ghost.scared) {
+                        ctx.filter = 'hue-rotate(200deg) brightness(1.2)';
+                    } else {
+                        ctx.filter = 'sepia(0.3) saturate(1.2) hue-rotate(-10deg)';
+                    }
+                    ctx.fillText('🐺', ghost.x, ghost.y);
+                    // Add bow emoji on top
+                    ctx.filter = 'none';
+                    ctx.font = '12px Arial';
+                    ctx.fillText('🎀', ghost.x + 8, ghost.y - 12);
+                    ctx.filter = 'none';
+                    return;
+                }
+                
+                if (ghost.type === 'old-coyote') {
+                    // Draw old coyote emoji with cane
+                    ctx.font = '22px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    if (ghost.scared) {
+                        ctx.filter = 'hue-rotate(200deg) brightness(1.2)';
+                    } else {
+                        ctx.filter = 'grayscale(0.4) sepia(0.6)';
+                    }
+                    ctx.fillText('🐺', ghost.x, ghost.y);
+                    // Add cane
+                    ctx.filter = 'none';
+                    ctx.font = '14px Arial';
+                    ctx.fillText('�', ghost.x + 10, ghost.y + 5);
+                    ctx.filter = 'none';
+                    return;
+                }
+                
+                if (ghost.type === 'coyote') {
+                    // Draw coyote emoji
+                    ctx.font = '22px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    if (ghost.scared) {
+                        ctx.filter = 'hue-rotate(200deg) brightness(1.2)';
+                    } else {
+                        ctx.filter = 'sepia(0.8) saturate(1.5) hue-rotate(-30deg)';
+                    }
+                    ctx.fillText('🐺', ghost.x, ghost.y);
+                    ctx.filter = 'none';
+                    return;
+                }
+                
+                ctx.fillStyle = ghost.color;
+                
+                // Ghost body
+                ctx.beginPath();
+                ctx.arc(ghost.x, ghost.y - 3, ghost.size, Math.PI, 0);
+                ctx.lineTo(ghost.x + ghost.size, ghost.y + ghost.size);
+                
+                // Wavy bottom
+                const waveWidth = ghost.size * 2 / 3;
+                for (let i = 0; i < 3; i++) {
+                    const x = ghost.x + ghost.size - (i + 1) * waveWidth;
+                    ctx.quadraticCurveTo(x + waveWidth/2, ghost.y + ghost.size + 3, x, ghost.y + ghost.size);
+                }
+                
+                ctx.lineTo(ghost.x - ghost.size, ghost.y + ghost.size);
+                ctx.closePath();
+                ctx.fill();
+
+                // Eyes
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(ghost.x - 4, ghost.y - 3, 4, 0, Math.PI * 2);
+                ctx.arc(ghost.x + 4, ghost.y - 3, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Pupils
+                ctx.fillStyle = ghost.scared ? '#fff' : '#000';
+                ctx.beginPath();
+                ctx.arc(ghost.x - 4 + (ghost.dx > 0 ? 1 : -1), ghost.y - 3, 2, 0, Math.PI * 2);
+                ctx.arc(ghost.x + 4 + (ghost.dx > 0 ? 1 : -1), ghost.y - 3, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Scared mouth
+                if (ghost.scared) {
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(ghost.x, ghost.y + 3, 4, 0, Math.PI);
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function gameLoop() {
+            // Clear canvas - dark blue/black background
+            ctx.fillStyle = '#000510';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw everything
+            drawMaze();
+            drawDots();
+            
+            // Update game state
+            if (!raccoon.dying) {
+                handleInput();
+                moveRaccoon();
+                moveGhosts();
+                checkDotCollection();
+            }
+            checkGhostCollision();
+            checkWin();
+
+            // Draw characters
+            drawGhosts();
+            drawRaccoon();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initialize and start game immediately with error handling
+        console.log('Starting game...');
+        
+        // Resume audio context on first user interaction
+        document.addEventListener('click', () => {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }, { once: true });
+        
+        try {
+            initDots();
+            console.log('Dots initialized:', dots.length);
+            console.log('Power pellets:', powerPellets.length);
+            powerPellets.forEach((p, i) => console.log('Pellet', i, 'at x:', p.x, 'y:', p.y));
+            gameLoop();
+            console.log('Game loop started');
+        } catch (e) {
+            console.error('Game error:', e);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#fff';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('ERROR: ' + e.message, canvas.width/2, canvas.height/2);
+        }
+    </script>
+</body>
+</html>
