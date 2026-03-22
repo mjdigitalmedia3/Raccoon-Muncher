@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Raccoon Muncher</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nocturnal Raccoon</title>
     <style>
         * {
             margin: 0;
@@ -35,6 +35,29 @@
 
         .title-icon {
             font-size: 4.5rem;
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6)) 
+                    drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.8))
+                    brightness(1.1)
+                    saturate(1.3);
+            animation: raccoonPulse 2s ease-in-out infinite;
+            transform-style: preserve-3d;
+        }
+
+        @keyframes raccoonPulse {
+            0%, 100% { 
+                transform: scale(1) rotate(-2deg);
+                filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6)) 
+                        drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.8))
+                        brightness(1.1)
+                        saturate(1.3);
+            }
+            50% { 
+                transform: scale(1.08) rotate(2deg);
+                filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.9)) 
+                        drop-shadow(3px 6px 8px rgba(0, 0, 0, 0.9))
+                        brightness(1.2)
+                        saturate(1.5);
+            }
         }
 
         h1 {
@@ -213,6 +236,125 @@
             color: #ffcc00;
             font-size: 0.85rem;
         }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 900px) {
+            .game-wrapper {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .score-panel {
+                display: none; /* Hide score panel on mobile */
+            }
+
+            .title-wrapper {
+                padding: 10px 20px;
+                margin-bottom: 10px;
+            }
+
+            .title-icon {
+                font-size: 3rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .game-info {
+                gap: 20px;
+                font-size: 1rem;
+                margin-top: 10px;
+            }
+
+            .controls {
+                display: none; /* Hide keyboard controls text on mobile */
+            }
+
+            #gameCanvas {
+                max-width: 100vw;
+                max-height: 60vh;
+                width: auto;
+                height: auto;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .title-wrapper {
+                padding: 8px 15px;
+            }
+
+            .title-icon {
+                font-size: 2.5rem;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+            }
+
+            .game-info {
+                font-size: 0.9rem;
+            }
+
+            .value {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* On-screen D-Pad for mobile */
+        .dpad {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180px;
+            height: 180px;
+            z-index: 100;
+        }
+
+        @media (max-width: 900px) {
+            .dpad {
+                display: grid;
+                grid-template-columns: 60px 60px 60px;
+                grid-template-rows: 60px 60px 60px;
+                gap: 5px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .dpad {
+                width: 150px;
+                height: 150px;
+                grid-template-columns: 50px 50px 50px;
+                grid-template-rows: 50px 50px 50px;
+            }
+        }
+
+        .dpad-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .dpad-btn:active {
+            background: rgba(255, 215, 0, 0.4);
+            border-color: #ffd700;
+        }
+
+        .dpad-up { grid-column: 2; grid-row: 1; }
+        .dpad-left { grid-column: 1; grid-row: 2; }
+        .dpad-right { grid-column: 3; grid-row: 2; }
+        .dpad-down { grid-column: 2; grid-row: 3; }
     </style>
 </head>
 <body>
@@ -264,8 +406,16 @@
     <div class="flash-overlay" id="flashOverlay"></div>
     <div class="game-over" id="gameOver">
         <h2 id="gameOverTitle">GAME OVER</h2>
-        <p id="gameOverMessage">Final Score: <span id="finalScore">0</span></p>
-        <button onclick="restartGame()">Play Again</button>
+        <p id="gameOverMessage">Better luck next time! Final Score: <span id="finalScore">0</span></p>
+        <button>Play Again</button>
+    </div>
+
+    <!-- On-screen D-Pad for mobile -->
+    <div class="dpad">
+        <div class="dpad-btn dpad-up" data-dir="up">⬆️</div>
+        <div class="dpad-btn dpad-left" data-dir="left">⬅️</div>
+        <div class="dpad-btn dpad-right" data-dir="right">➡️</div>
+        <div class="dpad-btn dpad-down" data-dir="down">⬇️</div>
     </div>
 
     <script>
@@ -446,6 +596,50 @@
         });
         document.addEventListener('keyup', (e) => keys[e.key] = false);
 
+        // Touch controls for D-pad
+        const dpadButtons = document.querySelectorAll('.dpad-btn');
+        
+        dpadButtons.forEach(btn => {
+            // Prevent default touch behaviors
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const dir = btn.dataset.dir;
+                keys['Arrow' + dir.charAt(0).toUpperCase() + dir.slice(1)] = true;
+                btn.style.background = 'rgba(255, 215, 0, 0.4)';
+            }, { passive: false });
+            
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const dir = btn.dataset.dir;
+                keys['Arrow' + dir.charAt(0).toUpperCase() + dir.slice(1)] = false;
+                btn.style.background = '';
+            }, { passive: false });
+            
+            // Also handle mouse events for testing on desktop
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                const dir = btn.dataset.dir;
+                keys['Arrow' + dir.charAt(0).toUpperCase() + dir.slice(1)] = true;
+                btn.style.background = 'rgba(255, 215, 0, 0.4)';
+            });
+            
+            btn.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                const dir = btn.dataset.dir;
+                keys['Arrow' + dir.charAt(0).toUpperCase() + dir.slice(1)] = false;
+                btn.style.background = '';
+            });
+            
+            btn.addEventListener('mouseleave', (e) => {
+                e.preventDefault();
+                const dir = btn.dataset.dir;
+                keys['Arrow' + dir.charAt(0).toUpperCase() + dir.slice(1)] = false;
+                btn.style.background = '';
+            });
+        });
+
         function handleInput() {
             if (keys['ArrowUp'] || keys['w'] || keys['W']) {
                 raccoon.dx = 0;
@@ -488,59 +682,66 @@
         }
 
         function moveRaccoon() {
-            // Calculate new position
-            const newX = raccoon.x + raccoon.dx;
-            const newY = raccoon.y + raccoon.dy;
+            // Use a smaller collision radius to keep raccoon centered in the path
+            const collisionRadius = 8; // Smaller than raccoon.size (12) to stay away from walls
             
-            // Check center point collision for more precise movement
-            const centerCol = Math.floor(raccoon.x / cellSize);
-            const centerRow = Math.floor(raccoon.y / cellSize);
-            
-            // Try to move in X direction with smaller collision radius
+            // Try to move in X direction
             if (raccoon.dx !== 0) {
                 const testX = raccoon.x + raccoon.dx;
-                // Use just the center point for cleaner movement
-                const testCol = Math.floor(testX / cellSize);
-                const testRow = Math.floor(raccoon.y / cellSize);
+                // Check collision at multiple points around the raccoon's edge
+                const testPoints = [
+                    {x: testX - collisionRadius, y: raccoon.y},
+                    {x: testX + collisionRadius, y: raccoon.y},
+                    {x: testX, y: raccoon.y - collisionRadius},
+                    {x: testX, y: raccoon.y + collisionRadius}
+                ];
                 
-                // Check bounds and wall collision at center
-                if (testRow >= 0 && testRow < rows && testCol >= 0 && testCol < cols) {
-                    const cell = maze[testRow][testCol];
-                    if (cell !== 1 && cell !== 4) { // Not a wall or ghost house
-                        raccoon.x = testX;
-                    } else {
-                        // Hit wall - try to slide to edge of current cell
-                        if (raccoon.dx > 0) {
-                            raccoon.x = (centerCol + 0.5) * cellSize - 1; // Left edge of wall
-                        } else {
-                            raccoon.x = (centerCol + 0.5) * cellSize + 1; // Right edge of wall
+                let canMove = true;
+                for (let point of testPoints) {
+                    const testCol = Math.floor(point.x / cellSize);
+                    const testRow = Math.floor(point.y / cellSize);
+                    
+                    if (testRow >= 0 && testRow < rows && testCol >= 0 && testCol < cols) {
+                        const cell = maze[testRow][testCol];
+                        if (cell === 1 || cell === 4) {
+                            canMove = false;
+                            break;
                         }
-                        raccoon.dx = 0;
                     }
+                }
+                
+                if (canMove) {
+                    raccoon.x = testX;
                 }
             }
             
-            // Try to move in Y direction with smaller collision radius
+            // Try to move in Y direction
             if (raccoon.dy !== 0) {
                 const testY = raccoon.y + raccoon.dy;
-                // Use just the center point for cleaner movement
-                const testCol = Math.floor(raccoon.x / cellSize);
-                const testRow = Math.floor(testY / cellSize);
+                // Check collision at multiple points around the raccoon's edge
+                const testPoints = [
+                    {x: raccoon.x - collisionRadius, y: testY},
+                    {x: raccoon.x + collisionRadius, y: testY},
+                    {x: raccoon.x, y: testY - collisionRadius},
+                    {x: raccoon.x, y: testY + collisionRadius}
+                ];
                 
-                // Check bounds and wall collision at center
-                if (testRow >= 0 && testRow < rows && testCol >= 0 && testCol < cols) {
-                    const cell = maze[testRow][testCol];
-                    if (cell !== 1 && cell !== 4) { // Not a wall or ghost house
-                        raccoon.y = testY;
-                    } else {
-                        // Hit wall - try to slide to edge of current cell
-                        if (raccoon.dy > 0) {
-                            raccoon.y = (centerRow + 0.5) * cellSize - 1; // Top edge of wall
-                        } else {
-                            raccoon.y = (centerRow + 0.5) * cellSize + 1; // Bottom edge of wall
+                let canMove = true;
+                for (let point of testPoints) {
+                    const testCol = Math.floor(point.x / cellSize);
+                    const testRow = Math.floor(point.y / cellSize);
+                    
+                    if (testRow >= 0 && testRow < rows && testCol >= 0 && testCol < cols) {
+                        const cell = maze[testRow][testCol];
+                        if (cell === 1 || cell === 4) {
+                            canMove = false;
+                            break;
                         }
-                        raccoon.dy = 0;
                     }
+                }
+                
+                if (canMove) {
+                    raccoon.y = testY;
                 }
             }
 
@@ -949,7 +1150,7 @@
             // Add munching effect by pulsing the raccoon
             const munchScale = 1 + Math.sin(Date.now() / 100) * 0.1;
             ctx.scale(munchScale, munchScale);
-            
+
             // Draw raccoon emoji - size changes based on power mode
             const fontSize = powerMode ? 36 : 24;
             ctx.font = fontSize + 'px Arial';
