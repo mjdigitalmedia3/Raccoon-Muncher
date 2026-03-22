@@ -239,18 +239,54 @@
 
         /* Mobile Responsive Styles */
         @media (max-width: 900px) {
+            body {
+                padding: 10px 0;
+            }
+
             .game-wrapper {
                 flex-direction: column;
                 gap: 10px;
             }
 
             .score-panel {
-                display: none; /* Hide score panel on mobile */
+                display: flex;
+                flex-direction: row;
+                gap: 8px;
+                padding: 8px;
+                min-width: auto;
+                max-width: 95vw;
+                justify-content: center;
+                margin: 5px auto;
+            }
+
+            .score-panel h3 {
+                display: none;
+            }
+
+            .enemy-row {
+                flex-direction: column;
+                gap: 3px;
+                margin-bottom: 0;
+                padding: 5px 6px;
+                min-width: 55px;
+            }
+
+            .enemy-icon {
+                font-size: 18px;
+                width: auto;
+            }
+
+            .enemy-name {
+                font-size: 0.65rem;
+            }
+
+            .enemy-points {
+                font-size: 0.7rem;
             }
 
             .title-wrapper {
                 padding: 10px 20px;
-                margin-bottom: 10px;
+                margin-bottom: 5px;
             }
 
             .title-icon {
@@ -268,7 +304,7 @@
             }
 
             .controls {
-                display: none; /* Hide keyboard controls text on mobile */
+                display: none;
             }
 
             #gameCanvas {
@@ -362,33 +398,33 @@
         <div class="title-icon">🦝</div>
         <h1>Urban Raccoon<br>Habitat Game</h1>
     </div>
+    <div class="score-panel">
+        <h3>Enemy Points</h3>
+        <div class="enemy-row">
+            <div class="enemy-icon">🐺</div>
+            <div class="enemy-info">
+                <div class="enemy-name">Old Coyote</div>
+                <div class="enemy-points">500 pts</div>
+            </div>
+        </div>
+        <div class="enemy-row">
+            <div class="enemy-icon">🐺</div>
+            <div class="enemy-info">
+                <div class="enemy-name">Coyote</div>
+                <div class="enemy-points">200 pts</div>
+            </div>
+        </div>
+        <div class="enemy-row">
+            <div class="enemy-icon">🐺</div>
+            <div class="enemy-info">
+                <div class="enemy-name">Girl Coyote</div>
+                <div class="enemy-points">100 pts</div>
+            </div>
+        </div>
+    </div>
     <div class="game-wrapper">
         <div class="game-container">
             <canvas id="gameCanvas" width="840" height="720"></canvas>
-        </div>
-        <div class="score-panel">
-            <h3>Enemy Points</h3>
-            <div class="enemy-row">
-                <div class="enemy-icon">🐺</div>
-                <div class="enemy-info">
-                    <div class="enemy-name">Old Coyote</div>
-                    <div class="enemy-points">500 pts</div>
-                </div>
-            </div>
-            <div class="enemy-row">
-                <div class="enemy-icon">🐺</div>
-                <div class="enemy-info">
-                    <div class="enemy-name">Coyote</div>
-                    <div class="enemy-points">200 pts</div>
-                </div>
-            </div>
-            <div class="enemy-row">
-                <div class="enemy-icon">🐺</div>
-                <div class="enemy-info">
-                    <div class="enemy-name">Girl Coyote</div>
-                    <div class="enemy-points">100 pts</div>
-                </div>
-            </div>
         </div>
     </div>
     <div class="game-info">
