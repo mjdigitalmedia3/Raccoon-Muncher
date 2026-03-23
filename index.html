@@ -722,6 +722,70 @@
             // Use a smaller collision radius to keep raccoon centered in the path
             const collisionRadius = 8; // Smaller than raccoon.size (12) to stay away from walls
             
+            // Calculate which cell the raccoon is currently in
+            const currentCol = Math.floor(raccoon.x / cellSize);
+            const currentRow = Math.floor(raccoon.y / cellSize);
+            
+            // Calculate distance from center of current cell
+            const cellCenterX = currentCol * cellSize + cellSize / 2;
+            const cellCenterY = currentRow * cellSize + cellSize / 2;
+            const distFromCenterX = Math.abs(raccoon.x - cellCenterX);
+            const distFromCenterY = Math.abs(raccoon.y - cellCenterY);
+            
+            // Corner assistance: if trying to turn and near an intersection, snap to corridor center
+            const snapThreshold = 12; // How close you need to be to snap
+            let snapped = false;
+            
+            // Check if we're trying to turn (moving in one axis, input in another)
+            const movingHorizontally = Math.abs(raccoon.dx) > 0;
+            const movingVertically = Math.abs(raccoon.dy) > 0;
+            const inputHorizontal = (keys['ArrowLeft'] || keys['ArrowRight'] || keys['a'] || keys['A'] || keys['d'] || keys['D']);
+            const inputVertical = (keys['ArrowUp'] || keys['ArrowDown'] || keys['w'] || keys['W'] || keys['s'] || keys['S']);
+            
+            // If currently moving horizontally but player wants to go vertical (or vice versa)
+            if ((movingHorizontally && inputVertical) || (movingVertically && inputHorizontal)) {
+                // Check if near an intersection (center of a cell)
+                if (distFromCenterX < snapThreshold && distFromCenterY < snapThreshold) {
+                    // Check if the turn direction is valid (not a wall)
+                    let canTurn = false;
+                    let targetCol = currentCol;
+                    let targetRow = currentRow;
+                    
+                    if (movingHorizontally && inputVertical) {
+                        // Trying to turn vertical
+                        if ((keys['ArrowUp'] || keys['w'] || keys['W']) && currentRow > 0) {
+                            targetRow = currentRow - 1;
+                        } else if ((keys['ArrowDown'] || keys['s'] || keys['S']) && currentRow < rows - 1) {
+                            targetRow = currentRow + 1;
+                        }
+                        // Check if target is passable
+                        if (targetRow >= 0 && targetRow < rows && targetCol >= 0 && targetCol < cols) {
+                            const cell = maze[targetRow][targetCol];
+                            if (cell !== 1 && cell !== 4) canTurn = true;
+                        }
+                    } else if (movingVertically && inputHorizontal) {
+                        // Trying to turn horizontal
+                        if ((keys['ArrowLeft'] || keys['a'] || keys['A']) && currentCol > 0) {
+                            targetCol = currentCol - 1;
+                        } else if ((keys['ArrowRight'] || keys['d'] || keys['D']) && currentCol < cols - 1) {
+                            targetCol = currentCol + 1;
+                        }
+                        // Check if target is passable
+                        if (targetRow >= 0 && targetRow < rows && targetCol >= 0 && targetCol < cols) {
+                            const cell = maze[targetRow][targetCol];
+                            if (cell !== 1 && cell !== 4) canTurn = true;
+                        }
+                    }
+                    
+                    // Snap to center if turn is possible
+                    if (canTurn) {
+                        raccoon.x = cellCenterX;
+                        raccoon.y = cellCenterY;
+                        snapped = true;
+                    }
+                }
+            }
+            
             // Try to move in X direction
             if (raccoon.dx !== 0) {
                 const testX = raccoon.x + raccoon.dx;
